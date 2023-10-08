@@ -32,8 +32,8 @@ export class MPromise {
   }
 
   then(
-    onFulfilled: ((value) => void) | null,
-    onRejected: ((reason) => void) | null
+    onFulfilled?: ((value) => void) | null,
+    onRejected?: ((reason) => void) | null
   ) {
     if (typeof onFulfilled != "function") {
       onFulfilled = () => {};
@@ -41,11 +41,24 @@ export class MPromise {
     if (typeof onRejected != "function") {
       onRejected = () => {};
     }
+    if (this.status === State.FULFILLED) {
+      try {
+        onFulfilled(this.value);
+      } catch (error) {
+        onRejected(error);
+      }
+    }
+    if (this.status === State.REJECTED) {
+      try {
+        onRejected(this.value);
+      } catch (error) {
+        onRejected(error);
+      }
+    }
   }
 }
 
 let p = new Promise((resolve, reject) => {
-  console.log(123);
   resolve("hello");
 });
 p.then();
