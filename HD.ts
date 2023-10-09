@@ -4,10 +4,14 @@ export enum State {
   REJECTED,
 }
 
+interface callback {
+  onFulfilled: (value) => void;
+  onRejected: (value) => void;
+}
 export class MPromise {
   status: State;
   value: null | any;
-  callbacks: any[];
+  callbacks: callback[];
   /**
    * Constructs a new Promise with the given executor function.
    * @param executor A function that takes two arguments: resolve and reject.
@@ -67,8 +71,20 @@ export class MPromise {
     }
     if (this.status === State.PENDING) {
       this.callbacks.push({
-        onFulfilled,
-        onRejected,
+        onFulfilled: (value) => {
+          try {
+            onFulfilled!(value);
+          } catch (error) {
+            onRejected!(error);
+          }
+        },
+        onRejected: (reason) => {
+          try {
+            onRejected!(reason);
+          } catch (error) {
+            onRejected!(reason);
+          }
+        },
       });
     }
     if (this.status === State.REJECTED) {
