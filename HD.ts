@@ -4,14 +4,26 @@ export enum State {
   REJECTED,
 }
 
-type ResolveFn<T> = (value: any) => void;
-type RejectFn = (reason: any) => void;
 export class MPromise {
   status: State;
   value: null | any;
-  constructor(executor: (resolve: ResolveFn<any>, reject: RejectFn) => void) {
+  callbacks: any[];
+  /**
+   * Constructs a new Promise with the given executor function.
+   * @param executor A function that takes two arguments: resolve and reject.
+   *                 The resolve function is called with a value when the promise is fulfilled.
+   *                 The reject function is called with a reason when the promise is rejected.
+   * @returns A new Promise instance.
+   */
+  constructor(
+    executor: (
+      resolve: (value: any) => void,
+      reject: (reason?: any) => void
+    ) => void
+  ) {
     this.status = State.PENDING;
     this.value = null;
+    this.callbacks = [];
     try {
       executor(this.resolve.bind(this), this.reject.bind(this));
     } catch (error) {
@@ -22,19 +34,22 @@ export class MPromise {
     if (this.status === State.PENDING) {
       this.status = State.FULFILLED;
       this.value = value;
+      this.callbacks.map((callback) => {
+        callback.onFulfilled(value);
+      });
     }
   }
   reject(reason) {
     if (this.status === State.PENDING) {
       this.status = State.REJECTED;
       this.value = reason;
+      this.callbacks.map((callback) => {
+        callback.onRejected(reason);
+      });
     }
   }
 
-  then(
-    onFulfilled?: ((value) => void) | null,
-    onRejected?: ((reason) => void) | null
-  ) {
+  then(onFulfilled?: (value) => void, onRejected?: (reason) => void) {
     if (typeof onFulfilled != "function") {
       onFulfilled = () => {};
     }
@@ -42,11 +57,19 @@ export class MPromise {
       onRejected = () => {};
     }
     if (this.status === State.FULFILLED) {
-      try {
-        onFulfilled(this.value);
-      } catch (error) {
-        onRejected(error);
-      }
+      setTimeout(() => {
+        try {
+          onFulfilled!(this.value);
+        } catch (error) {
+          onRejected!(error);
+        }
+      });
+    }
+    if (this.status === State.PENDING) {
+      this.callbacks.push({
+        onFulfilled,
+        onRejected,
+      });
     }
     if (this.status === State.REJECTED) {
       try {
@@ -57,8 +80,3 @@ export class MPromise {
     }
   }
 }
-
-let p = new Promise((resolve, reject) => {
-  resolve("hello");
-});
-p.then();
