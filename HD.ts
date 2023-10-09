@@ -72,11 +72,13 @@ export class MPromise {
       });
     }
     if (this.status === State.REJECTED) {
-      try {
-        onRejected(this.value);
-      } catch (error) {
-        onRejected(error);
-      }
+      setTimeout(() => {
+        try {
+          onRejected!(this.value);
+        } catch (error) {
+          onRejected!(error);
+        }
+      });
     }
   }
 }
