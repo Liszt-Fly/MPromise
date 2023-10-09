@@ -38,8 +38,10 @@ export class MPromise {
     if (this.status === State.PENDING) {
       this.status = State.FULFILLED;
       this.value = value;
-      this.callbacks.map((callback) => {
-        callback.onFulfilled(value);
+      setTimeout(() => {
+        this.callbacks.map((callback) => {
+          callback.onFulfilled(value);
+        });
       });
     }
   }
@@ -47,8 +49,10 @@ export class MPromise {
     if (this.status === State.PENDING) {
       this.status = State.REJECTED;
       this.value = reason;
-      this.callbacks.map((callback) => {
-        callback.onRejected(reason);
+      setTimeout(() => {
+        this.callbacks.map((callback) => {
+          callback.onRejected(reason);
+        });
       });
     }
   }
